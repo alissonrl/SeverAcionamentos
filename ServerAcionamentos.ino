@@ -1,7 +1,7 @@
 
 /*Autor: Alisson Rodolfo Leite
          Leandro Calixto Tenorio de Alburquerque
-   LEANDRO CALIXTO TENORIO DE ALBUQUERQUE
+   
 */
 
 //inclusão de bibliotecas
@@ -17,12 +17,22 @@
 // definição do tamanho da EEPROM a ser utilizada
 #define EEPROM_SIZE 100
 
-
 //-------- Configurações de Wi-fi-----------
 
 const char* ssid     = "Rede";
 const char* password = "mesmasenha";
 
+
+//-----  Temperatura interna - Comandos extendidos ----
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+uint8_t temprature_sens_read();
+
+#ifdef __cplusplus
+}
+#endif
 
 // Numero da prota do web Serever
 WiFiServer server(80);
@@ -48,7 +58,8 @@ struct temporizacao {
   byte dias ;
   byte durar;
 };
-
+#define TempResfriamento 80 // temperatura o qual deve acionar ventoinha para Resfriamento 
+#define PinVentoinha 11// Pino que esta conectado a ventoinha 
 #define qtparam 4 // quantidade de parametros do struct, craido para facilaitar na fucao load e save
 #define PinLed  2  // pino padrao que tem o led na placa 
 #define maxval  5 //quantida maxia de valores de agendamento 1 - 9
@@ -111,8 +122,9 @@ void setup()
   load(); // faz upload dos dados guardados
   Serial.begin(115200); // inicia comunicacao serial
   pinMode(PinLed, OUTPUT);      // set LED como saida
+  pinMode(PinLed, OUTPUT);      // set Ventoinha como saida
   for (i = 0 ; i < maxpin; i++) {
-    pinMode(pinos_out[i], OUTPUT);  // seta pinos como saída
+    pinMode(pinos_out[i], OUTPUT);  // set pinos como saída
   }
 
   // Inicia comunicacao com Wifi
@@ -190,6 +202,12 @@ void coreTaskZero( void * pvParameters ) {
         PinLedState = "OFF";
       }
     }
+  }
+  //acionamneto de ventoinha para resifriamento
+  if (((temprature_sens_read() - 32) / 1.8) > TempResfriamento ) {
+    digitalWrite (PinVentoinha, HIGH); // liga resfriamnto
+  } else if (((temprature_sens_read() - 32) / 1.8) < (TempResfriamento - 5)) {
+    digitalWrite (PinVentoinha, LOW); //desliga resfriamento
   }
 }
 // tratamento de informacao
@@ -285,7 +303,9 @@ void loop() {
             client.println(".button2 {background-color: #555555;}</style></head>");
 
             // Web Page Heading
-            str_aux = data_formatada;
+            str_aux = data_formatada; 
+            str_aux1 = String(((temprature_sens_read() - 32) / 1.8)) + "C";//leitura do sensor de temperatura interno
+            str_aux = str_aux + " - " + str_aux1;
             client.println("<body><h1>ESP32 Web Server</h1>");
             // por selecao de saida checked='checked'
             client.println("<p>");
@@ -297,17 +317,17 @@ void loop() {
               }
             }
             client.println("</p>");
-            
+
             client.println("<body><h2>" + str_aux + "</h2>");
             client.println("<p>GPIO " + String(pinos_out[saida]) + " - State " + PinLedState + "</p>");
-         
+
             // If the PinLedState is off, it displays the ON button
             if (PinLedState == "OFF") {
               client.println("<p><a href=\"/2/on\"><button class=\"button\">ON</button></a></p>");
             } else {
               client.println("<p><a href=\"/2/off\"><button class=\"button button2\">OFF</button></a></p>");
             }
-           
+
             str_aux = tempos_acionamento[saida] ;
             client.println("<form method='get'>");
             client.println("  <b>Periodos de Acionamento:</b><input type='number' step ='1' min='1' max='" + String(maxval) + "' name='saida" + String(saida) + "' maxlength='3' value='" + str_aux + "'size='5'/>");
