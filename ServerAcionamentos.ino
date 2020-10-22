@@ -1,7 +1,6 @@
 
 /*Autor: Alisson Rodolfo Leite
          Leandro Calixto Tenorio de Alburquerque
-   
 */
 
 //inclusão de bibliotecas
@@ -34,7 +33,7 @@ uint8_t temprature_sens_read();
 }
 #endif
 
-// Numero da prota do web Serever
+// Numero da porta do web Serever
 WiFiServer server(80);
 
 //-------- Configurações de relógio on-line-----------
@@ -45,7 +44,7 @@ time_t tt;              // Variavel para manipulacao auxiiar da hora
 char data_formatada[64]; //auxiliar para manipulacao da hora
 struct tm data;//Cria a estrutura que contem as informacoes da data.
 
-// Variable historico das requisicoes do HTTP
+// Variavel de historico das requisicoes do HTTP
 String header;
 
 // Variavel auxiliar do estado do pino de saida, ira ser utilizado para indicar na pagina web
@@ -58,6 +57,7 @@ struct temporizacao {
   byte dias ;
   byte durar;
 };
+#define PinWPS 4
 #define TempResfriamento 80 // temperatura o qual deve acionar ventoinha para Resfriamento 
 #define PinVentoinha 11// Pino que esta conectado a ventoinha 
 #define qtparam 4 // quantidade de parametros do struct, craido para facilaitar na fucao load e save
